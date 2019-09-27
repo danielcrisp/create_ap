@@ -1,0 +1,71 @@
+#!/bin/sh
+
+CONFIG_OPTS=(WIFI_IFACE GATEWAY)
+
+WIFI_IFACE=
+GATEWAY=
+LOAD_CONFIG=
+
+is_config_opt() {
+    local elem opt="$1"
+
+    for elem in "${CONFIG_OPTS[@]}"; do
+        if [[ "$elem" == "$opt" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Load options from config file
+read_config() {
+    local opt_name opt_val line
+
+    while read line; do
+        # Read switches and their values
+        opt_name="${line%%=*}"
+        opt_val="${line#*=}"
+        if is_config_opt "$opt_name" ; then
+            eval $opt_name="\$opt_val"
+        fi
+    done < "$LOAD_CONFIG"
+}
+
+ARGS=( "$@" )
+
+# Preprocessing for --config before option-parsing starts
+for ((i=0; i<$#; i++)); do
+    if [[ "${ARGS[i]}" = "--config" ]]; then
+        if [[ -f "${ARGS[i+1]}" ]]; then
+            LOAD_CONFIG="${ARGS[i+1]}"
+            read_config
+        else
+            echo "ERROR: No config file found at given location" >&2
+            exit 1
+        fi
+        break
+    fi
+done
+
+echo $WIFI_IFACE
+echo $GATEWAY
+
+
+# set NATing rules
+iptables -t nat -I POSTROUTING -s ${GATEWAY%.*}.0/24 ! -o ${WIFI_IFACE} -j MASQUERADE
+iptables -I FORWARD -i ${WIFI_IFACE} -j ACCEPT
+echo 1 > /proc/sys/net/ipv4/conf/all/forwarding
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+# allow PPTP VPN behind our NAT
+modprobe nf_nat_pptp
+
+# create AP
+create_ap -n --config /etc/create_ap_hotplug.conf
+ret=$?
+
+# cleanup
+iptables -t nat -D POSTROUTING -s ${GATEWAY%.*}.0/24 ! -o ${WIFI_IFACE} -j MASQUERADE
+iptables -D FORWARD -i ${WIFI_IFACE} -j ACCEPT
+
+exit $ret

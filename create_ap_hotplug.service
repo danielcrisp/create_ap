@@ -1,0 +1,13 @@
+[Unit]
+Description=Create AP HOTPLUG Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/create_ap_hotplug
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
