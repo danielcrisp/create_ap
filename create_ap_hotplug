@@ -1,10 +1,10 @@
 #!/bin/sh
 
+CONFIG_OPTS=(WIFI_IFACE GATEWAY)
+
 WIFI_IFACE=
 GATEWAY=
-LOAD_CONFIG=
-
-CONFIG_OPTS=(WIFI_IFACE GATEWAY)
+LOAD_CONFIG="/etc/create_ap_hotplug.conf"
 
 is_config_opt() {
     local elem opt="$1"
@@ -31,25 +31,12 @@ read_config() {
     done < "$LOAD_CONFIG"
 }
 
-ARGS=( "$@" )
-
-# Preprocessing for --config before option-parsing starts
-for ((i=0; i<$#; i++)); do
-    if [[ "${ARGS[i]}" = "--config" ]]; then
-        if [[ -f "${ARGS[i+1]}" ]]; then
-            LOAD_CONFIG="${ARGS[i+1]}"
-            read_config
-        else
-            echo "ERROR: No config file found at given location" >&2
-            exit 1
-        fi
-        break
-    fi
-done
-
-echo $WIFI_IFACE
-echo $GATEWAY
-
+if [[ -f "$LOAD_CONFIG" ]]; then
+	read_config
+else
+	echo "ERROR: No config file found at given location" >&2
+	exit 1
+fi
 
 # set NATing rules
 iptables -t nat -I POSTROUTING -s ${GATEWAY%.*}.0/24 ! -o ${WIFI_IFACE} -j MASQUERADE
@@ -61,7 +48,7 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 modprobe nf_nat_pptp
 
 # create AP
-create_ap -n --config /etc/create_ap_hotplug.conf
+create_ap -n --config ${LOAD_CONFIG}
 ret=$?
 
 # cleanup
