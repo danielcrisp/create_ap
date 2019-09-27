@@ -39,20 +39,30 @@ else
 fi
 
 # set NATing rules
-iptables -t nat -I POSTROUTING -s ${GATEWAY%.*}.0/24 ! -o ${WIFI_IFACE} -j MASQUERADE
-iptables -I FORWARD -i ${WIFI_IFACE} -j ACCEPT
-echo 1 > /proc/sys/net/ipv4/conf/all/forwarding
-echo 1 > /proc/sys/net/ipv4/ip_forward
+# iptables -t nat -I POSTROUTING -s ${GATEWAY%.*}.0/24 ! -o ${WIFI_IFACE} -j MASQUERADE
+# iptables -I FORWARD -i ${WIFI_IFACE} -j ACCEPT
+# echo 1 > /proc/sys/net/ipv4/conf/all/forwarding
+# echo 1 > /proc/sys/net/ipv4/ip_forward
 
 # allow PPTP VPN behind our NAT
-modprobe nf_nat_pptp
+# modprobe nf_nat_pptp
 
 # create AP
 create_ap -n --config ${LOAD_CONFIG}
+
+iptables -w -I INPUT -i ap0 -j ACCEPT
+iptables -w -I FORWARD -i ap0 -j ACCEPT
+iptables -w -I FORWARD -o ap0 -j ACCEPT
+iptables -w -t nat -A POSTROUTING -j MASQUERADE -s ${GATEWAY%.*}.0/24
+sysctl -w net.ipv4.ip_forward=1
+
 ret=$?
 
 # cleanup
-iptables -t nat -D POSTROUTING -s ${GATEWAY%.*}.0/24 ! -o ${WIFI_IFACE} -j MASQUERADE
-iptables -D FORWARD -i ${WIFI_IFACE} -j ACCEPT
+iptables -w -D INPUT -i ap0 -j ACCEPT
+iptables -w -D FORWARD -i ap0 -j ACCEPT
+iptables -w -D FORWARD -o ap0 -j ACCEPT
+iptables -w -t nat -D POSTROUTING -j MASQUERADE -s ${GATEWAY%.*}.0/24
+sysctl -w net.ipv4.ip_forward=0
 
 exit $ret
