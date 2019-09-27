@@ -47,15 +47,14 @@ fi
 # allow PPTP VPN behind our NAT
 # modprobe nf_nat_pptp
 
-# create AP
-create_ap -n --config ${LOAD_CONFIG}
-
 iptables -w -I INPUT -i ap0 -j ACCEPT
 iptables -w -I FORWARD -i ap0 -j ACCEPT
 iptables -w -I FORWARD -o ap0 -j ACCEPT
 iptables -w -t nat -A POSTROUTING -j MASQUERADE -s ${GATEWAY%.*}.0/24
 sysctl -w net.ipv4.ip_forward=1
 
+# create AP
+create_ap -n --config ${LOAD_CONFIG}
 ret=$?
 
 # cleanup
