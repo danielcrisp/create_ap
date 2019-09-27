@@ -38,12 +38,6 @@ else
 	exit 1
 fi
 
-# set NATing rules
-# iptables -t nat -I POSTROUTING -s ${GATEWAY%.*}.0/24 ! -o ${WIFI_IFACE} -j MASQUERADE
-# iptables -I FORWARD -i ${WIFI_IFACE} -j ACCEPT
-# echo 1 > /proc/sys/net/ipv4/conf/all/forwarding
-# echo 1 > /proc/sys/net/ipv4/ip_forward
-
 # allow PPTP VPN behind our NAT
 # modprobe nf_nat_pptp
 
