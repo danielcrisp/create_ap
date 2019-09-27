@@ -74,13 +74,17 @@
 ### Client Isolation:
     create_ap --isolate-clients wlan0 eth0 MyAccessPoint MyPassPhrase
 
+### Create AP which supports hotplugging of internet
+Configure your settings in /etc/create_ap_hotplug.conf
+    create_ap_hotplug
+
 ## Systemd service
 Using the persistent [systemd](https://wiki.archlinux.org/index.php/systemd#Basic_systemctl_usage) service
 ### Start service immediately:
-    systemctl start create_ap
+    systemctl start create_ap # or create_ap_hotplug
 
 ### Start on boot:
-    systemctl enable create_ap
+    systemctl enable create_ap # or create_ap_hotplug
 
 
 ## License
