@@ -1,10 +1,10 @@
 #!/bin/sh
 
-CONFIG_OPTS=(WIFI_IFACE GATEWAY)
-
 WIFI_IFACE=
 GATEWAY=
 LOAD_CONFIG=
+
+CONFIG_OPTS=(WIFI_IFACE GATEWAY)
 
 is_config_opt() {
     local elem opt="$1"
